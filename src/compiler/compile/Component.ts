@@ -525,11 +525,11 @@ export default class Component {
 	}
 
 	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script: boolean) {
-		if (node.type === 'ExportDefaultDeclaration') {
+		if (node.type === 'ExportDefaultDeclaration') { // export default
 			return this.error(node as any, compiler_errors.default_export);
 		}
 
-		if (node.type === 'ExportNamedDeclaration') {
+		if (node.type === 'ExportNamedDeclaration') { // export { a, b} | export const a
 			if (node.source) {
 				if (module_script) {
 					this.exports_from.push(node);
@@ -539,7 +539,7 @@ export default class Component {
 				return null;
 			}
 			if (node.declaration) {
-				if (node.declaration.type === 'VariableDeclaration') {
+				if (node.declaration.type === 'VariableDeclaration') { // export const a
 					node.declaration.declarations.forEach(declarator => {
 						extract_names(declarator.id).forEach(name => {
 							const variable = this.var_lookup.get(name);
@@ -549,7 +549,7 @@ export default class Component {
 							}
 						});
 					});
-				} else {
+				} else { // export function a(FunctionDeclaration) | export class A(ClassDeclaration)
 					const { name } = node.declaration.id;
 
 					const variable = this.var_lookup.get(name);
@@ -561,7 +561,7 @@ export default class Component {
 				node.specifiers.forEach(specifier => {
 					const variable = this.var_lookup.get(specifier.local.name);
 
-					if (variable) {
+					if (variable) { // export { a, b }
 						variable.export_name = specifier.exported.name;
 
 						if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
@@ -709,7 +709,7 @@ export default class Component {
 			if (this.var_lookup.has(name)) return;
 			const node = globals.get(name);
 
-			if (this.injected_reactive_declaration_vars.has(name)) {
+			if (this.injected_reactive_declaration_vars.has(name)) { // 响应式变量
 				this.add_var(node, {
 					name,
 					injected: true,
@@ -717,12 +717,12 @@ export default class Component {
 					reassigned: true,
 					initialised: true
 				});
-			} else if (is_reserved_keyword(name)) {
+			} else if (is_reserved_keyword(name)) { // 保留关键字
 				this.add_var(node, {
 					name,
 					injected: true
 				});
-			} else if (name[0] === '$') {
+			} else if (name[0] === '$') { // store
 				if (name === '$' || name[1] === '$') {
 					return this.error(node as any, compiler_errors.illegal_global(name));
 				}

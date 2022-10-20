@@ -57,7 +57,7 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			block = parser.current();
 
-			expected = 'await';
+			expected = 'await'; // ElseBlock时会被下面的判断覆盖
 		}
 
 		if (block.type === 'IfBlock') {
