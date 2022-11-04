@@ -49,12 +49,12 @@ function get_constructor(type) {
 
 export default function map_children(component, parent, scope, children: TemplateNode[]) {
 	let last = null;
-	let ignores = [];
+	let ignores = []; // 根据<!-- svelte-ignore -->注释，忽略警告
 
 	return children.map(child => {
 		const constructor = get_constructor(child.type);
 
-		const use_ignores = child.type !== 'Text' && child.type !== 'Comment' && ignores.length;
+		const use_ignores = child.type !== 'Text' && child.type !== 'Comment' && ignores.length; // <!-- svelte-ignore 空 >可以起到取消忽略功能?
 
 		if (use_ignores) component.push_ignores(ignores);
 		const node = new constructor(component, parent, scope, child);
@@ -64,7 +64,7 @@ export default function map_children(component, parent, scope, children: Templat
 			push_array(ignores, node.ignores);
 		}
 
-		if (last) last.next = node;
+		if (last) last.next = node; // 维护兄弟节点链表关系
 		node.prev = last;
 		last = node;
 

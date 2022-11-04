@@ -206,9 +206,9 @@ export interface AppendTarget {
 export interface Var {
 	name: string;
 	export_name?: string; // the `bar` in `export { foo as bar }`
-	injected?: boolean;
+	injected?: boolean; // is true if the declaration is injected by Svelte, rather than in the code you wrote 是否为svelte生成的变量，false为用户定义变量
 	module?: boolean;
-	mutated?: boolean;
+	mutated?: boolean; // if the value's properties are assigned to inside the component 值是否在组件内被修改
 	reassigned?: boolean;
 	referenced?: boolean;  // referenced from template scope
 	referenced_from_script?: boolean;        // referenced from script

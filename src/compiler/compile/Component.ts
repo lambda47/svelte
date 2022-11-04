@@ -180,6 +180,7 @@ export default class Component {
 
 		this.walk_module_js();
 
+    // 检查script标签前是否有<!-- svelte-ignore -->注释
 		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
 		this.walk_instance_js_pre_template();
 		this.pop_ignores();
@@ -657,7 +658,7 @@ export default class Component {
 		const script = this.ast.instance;
 		if (!script) return;
 
-		// inject vars for reactive declarations
+		// inject vars for reactive declarations e.g.	$: total = value;
 		script.content.body.forEach(node => {
 			if (node.type !== 'LabeledStatement') return;
 			if (node.body.type !== 'ExpressionStatement') return;
@@ -679,8 +680,8 @@ export default class Component {
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
 
-		instance_scope.declarations.forEach((node, name) => {
-			if (name[0] === '$') {
+		instance_scope.declarations.forEach((node, name) => { // 记录定义的变量
+			if (name[0] === '$') { // 定义的变量不能以$开头
 				return this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
@@ -699,7 +700,7 @@ export default class Component {
 
 		// NOTE: add store variable first, then only $store value
 		// as `$store` will mark `store` variable as referenced and subscribable
-		const global_keys = Array.from(globals.keys());
+		const global_keys = Array.from(globals.keys()); // $store变量排在后面，因为$store变量要设置对应引用变量的引用关系，确保被引用的变量已添加
 		const sorted_globals = [
 			...global_keys.filter(key => key[0] !== '$'),
 			...global_keys.filter(key => key[0] === '$')
@@ -709,10 +710,10 @@ export default class Component {
 			if (this.var_lookup.has(name)) return;
 			const node = globals.get(name);
 
-			if (this.injected_reactive_declaration_vars.has(name)) { // 响应式变量
+			if (this.injected_reactive_declaration_vars.has(name)) { // 响应式变量 $: total = value
 				this.add_var(node, {
 					name,
-					injected: true,
+					injected: true, // 添加响应式变量，响应式变量为svelte生成，因为定义的时候以lable: 全局变量的形式定义
 					writable: true,
 					reassigned: true,
 					initialised: true
@@ -734,7 +735,7 @@ export default class Component {
 					writable: true
 				});
 
-				this.add_reference(node, name.slice(1));
+				this.add_reference(node, name.slice(1)); // 添加引用关系
 
 				const variable = this.var_lookup.get(name.slice(1));
 				if (variable) {

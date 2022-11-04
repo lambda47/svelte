@@ -31,7 +31,7 @@ export default class SlotTemplate extends Node {
 
 		info.attributes.forEach((node) => {
 			switch (node.type) {
-				case 'Let': {
+				case 'Let': { // <svelte:frament let:item={item}>
 					const l = new Let(component, this, scope, node);
 					this.lets.push(l);
 					const dependencies = new Set([l.name.name]);
@@ -41,7 +41,7 @@ export default class SlotTemplate extends Node {
 					});
 					break;
 				}
-				case 'Attribute': {
+				case 'Attribute': { // <svelte:fratment slot="footer">
 					if (node.name === 'slot') {
 						this.slot_attribute = new Attribute(component, this, scope, node);
 						if (!this.slot_attribute.is_static) {
