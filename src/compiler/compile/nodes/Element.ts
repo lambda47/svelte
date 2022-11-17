@@ -160,7 +160,7 @@ function is_parent(parent: INode, elements: string[]) {
 	return check;
 }
 
-function get_namespace(parent: Element, element: Element, explicit_namespace: string) {
+function  get_namespace(parent: Element, element: Element, explicit_namespace: string) { // explicit_namespace参数直接指定namespace
 	const parent_element = parent.find_nearest(/^Element/);
 
 	if (!parent_element) {
@@ -234,7 +234,7 @@ export default class Element extends Node {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
-		if (info.name === 'svelte:element') {
+		if (info.name === 'svelte:element') { // 所有的tag name都做为表达式
 			if (typeof info.tag !== 'string') {
 				this.tag_expr = new Expression(component, this, scope, info.tag);
 			} else {
@@ -244,9 +244,9 @@ export default class Element extends Node {
 			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
 		}
 
-		this.namespace = get_namespace(parent as Element, this, component.namespace);
+		this.namespace = get_namespace(parent as Element, this, component.namespace); //获取命名空间（递归向父级查找）
 
-		if (this.namespace !== namespaces.foreign) {
+		if (this.namespace !== namespaces.foreign) { // namespaces.foreign主要用于将svelte用于一些非浏览器环境下，使对浏览器环境的一些特殊处理不执行，比如属性名不区分大小写等
 			if (this.name === 'pre' || this.name === 'textarea') {
 				const first = info.children[0];
 				if (first && first.type === 'Text') {
@@ -261,7 +261,7 @@ export default class Element extends Node {
 				}
 			}
 
-			if (this.name === 'textarea') {
+			if (this.name === 'textarea') { // textarea标签children转换为value属性
 				if (info.children.length > 0) {
 					const value_attribute = info.attributes.find(node => node.name === 'value');
 					if (value_attribute) {
@@ -281,7 +281,7 @@ export default class Element extends Node {
 				}
 			}
 
-			if (this.name === 'option') {
+			if (this.name === 'option') { // option标签children转换为value属性
 				// Special case — treat these the same way:
 				//   <option>{foo}</option>
 				//   <option value={foo}>{foo}</option>
@@ -299,20 +299,20 @@ export default class Element extends Node {
 		}
 		const has_let = info.attributes.some(node => node.type === 'Let');
 		if (has_let) {
-			scope = scope.child();
+			scope = scope.child(); // 创建新作用域
 		}
 
 		// Binding relies on Attribute, defer its evaluation
 		const order = ['Binding']; // everything else is -1
-		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type)); // Binding排在最后面（input file 进行绑定的时候会读取type属性，input file 不允许修改value）
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
-				case 'Action':
+				case 'Action': // 生命周期钩子
 					this.actions.push(new Action(component, this, scope, node));
 					break;
 
-				case 'Attribute':
+				case 'Attribute': // 属性
 				case 'Spread':
 					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
@@ -324,19 +324,19 @@ export default class Element extends Node {
 					this.bindings.push(new Binding(component, this, scope, node));
 					break;
 
-				case 'Class':
+				case 'Class': // class
 					this.classes.push(new Class(component, this, scope, node));
 					break;
 
-				case 'StyleDirective':
+				case 'StyleDirective': // style(行内样式)
 					this.styles.push(new StyleDirective(component, this, scope, node));
 					break;
 
-				case 'EventHandler':
+				case 'EventHandler': // 事件处理函数
 					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
-				case 'Let': {
+				case 'Let': { // Slot传值
 					const l = new Let(component, this, scope, node);
 					this.lets.push(l);
 					const dependencies = new Set([l.name.name]);
@@ -347,7 +347,7 @@ export default class Element extends Node {
 					break;
 				}
 
-				case 'Transition':
+				case 'Transition': // 动画
 				{
 					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
@@ -355,7 +355,7 @@ export default class Element extends Node {
 					break;
 				}
 
-				case 'Animation':
+				case 'Animation': // 动画
 					this.animation = new Animation(component, this, scope, node);
 					break;
 
@@ -369,9 +369,9 @@ export default class Element extends Node {
 
 		this.validate();
 
-		this.optimise();
+		this.optimise(); // 删除class、style属性多余空格
 
-		component.apply_stylesheet(this);
+		component.apply_stylesheet(this); // 记录当前compoent下所有elements，用于css合法性校验
 	}
 
 	validate() {
@@ -379,15 +379,15 @@ export default class Element extends Node {
 			this.component.warn(this, compiler_warnings.component_name_lowercase(this.name));
 		}
 
-		this.validate_attributes();
-		this.validate_event_handlers();
+		this.validate_attributes(); // 校验属性
+		this.validate_event_handlers(); // 校验事件处理函数修饰符
 		if (this.namespace === namespaces.foreign) {
 			this.validate_bindings_foreign();
 		} else {
-			this.validate_attributes_a11y();
-			this.validate_special_cases();
-			this.validate_bindings();
-			this.validate_content();
+			this.validate_attributes_a11y(); // 无障碍阅读相关校验
+			this.validate_special_cases(); // 一些特定的校验
+			this.validate_bindings(); // bind校验
+			this.validate_content(); // 校验是否内容为空
 		}
 
 	}
@@ -437,7 +437,7 @@ export default class Element extends Node {
 		});
 	}
 
-	validate_attributes_a11y() {
+	validate_attributes_a11y() { // A11y(无障碍阅读)
 		const { component, attributes, handlers } = this;
 
 		const attribute_map = new Map<string, Attribute>();

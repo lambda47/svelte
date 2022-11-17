@@ -29,7 +29,7 @@ export default class InlineComponent extends Node {
 		super(component, parent, scope, info);
 
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
-			const name = info.name.split('.')[0]; // accommodate namespaces
+			const name = info.name.split('.')[0]; // accommodate namespaces 多个组件在同一个js文件中导出
 			component.warn_if_undefined(name, info, scope);
 			component.add_reference(this as any, name);
 		}

@@ -196,7 +196,7 @@ export default function tag(parser: Parser) {
 		if (definition.value === true) {
 			parser.error(parser_errors.invalid_element_definition, definition.start);
 		}
-		element.tag = definition.value[0].data || definition.value[0].expression;
+		element.tag = definition.value[0].data || definition.value[0].expression; // data为string类型的属性值 attr = ""，其他为expression attr = {}
 	}
 
 	// special cases – top-level <script> and <style>
