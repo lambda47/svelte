@@ -341,7 +341,7 @@ export default class Element extends Node {
 					this.lets.push(l);
 					const dependencies = new Set([l.name.name]);
 
-					l.names.forEach(name => {
+					l.names.forEach(name => { // 记录let指令引入的变量依赖关系
 						scope.add(name, dependencies, this);
 					});
 					break;

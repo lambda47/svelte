@@ -37,7 +37,7 @@ export default class InlineComponent extends Node {
 		this.name = info.name;
 		this.namespace = get_namespace(parent, component.namespace);
 
-		this.expression = this.name === 'svelte:component'
+		this.expression = this.name === 'svelte:component' // this表达式<svelte:component this={expression}/>
 			? new Expression(component, this, scope, info.expression)
 			: null;
 
@@ -84,7 +84,7 @@ export default class InlineComponent extends Node {
 			/* eslint-enable no-fallthrough */
 		});
 
-		if (this.lets.length > 0) {
+		if (this.lets.length > 0) { // 记录let指令引入的变量依赖关系
 			this.scope = scope.child();
 
 			this.lets.forEach(l => {
@@ -98,7 +98,7 @@ export default class InlineComponent extends Node {
 			this.scope = scope;
 		}
 
-		this.handlers.forEach(handler => {
+		this.handlers.forEach(handler => { // 校验事件处理函数修饰符
 			handler.modifiers.forEach(modifier => {
 				if (modifier !== 'once') {
 					return component.error(handler, compiler_errors.invalid_event_modifier_component);
@@ -109,10 +109,10 @@ export default class InlineComponent extends Node {
 		const children = [];
 		for (let i = info.children.length - 1; i >= 0; i--) {
 			const child = info.children[i];
-			if (child.type === 'SlotTemplate') {
+			if (child.type === 'SlotTemplate') { // <svelte:fragment>
 				children.push(child);
 				info.children.splice(i, 1);
-			} else if ((child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) {
+			} else if ((child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) { // 所有slot全部用SlotTemplate包装一层
 				const slot_template = {
 					start: child.start,
 					end: child.end,
@@ -123,7 +123,7 @@ export default class InlineComponent extends Node {
 				};
 
 				// transfer attributes
-				for (let i = child.attributes.length - 1; i >= 0; i--) {
+				for (let i = child.attributes.length - 1; i >= 0; i--) { // 移动let指令和slot属性到新创建的SlotTemplate上
 					const attribute = child.attributes[i];
 					if (attribute.type === 'Let') {
 						slot_template.attributes.push(attribute);
@@ -133,7 +133,7 @@ export default class InlineComponent extends Node {
 					}
 				}
 				// transfer const
-				for (let i = child.children.length - 1; i >= 0; i--) {
+				for (let i = child.children.length - 1; i >= 0; i--) { // 移动const到新创建的SlotTemplate上
 					const child_child = child.children[i];
 					if (child_child.type === 'ConstTag') {
 						slot_template.children.push(child_child);
@@ -146,7 +146,7 @@ export default class InlineComponent extends Node {
 			}
 		}
 
-		if (info.children.some(node => not_whitespace_text(node))) {
+		if (info.children.some(node => not_whitespace_text(node))) { // 非空的text用SlotTemplate包装一层
 			children.push({
 				start: info.start,
 				end: info.end,

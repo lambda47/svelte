@@ -32,7 +32,7 @@ export default class Window extends Node {
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
 				this.handlers.push(new EventHandler(component, this, scope, node));
-			} else if (node.type === 'Binding') {
+			} else if (node.type === 'Binding') { // 只能绑定innerWidth,innerHeight,outerWidth,outerHeight,scrollX,scrollY,online
 				if (node.expression.type !== 'Identifier') {
 					const { parts } = flatten_reference(node.expression);
 

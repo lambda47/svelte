@@ -64,7 +64,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 
 	// i am well aware that this code is gross
 	// TODO: context-overflow make it less gross
-	const changes = {
+	const changes = { // 2进制位标记是否改变，nubmer类型默认32位
 		type: 'ParenthesizedExpression',
 		get expression() {
 			if (block.renderer.context_overflow) {
@@ -109,7 +109,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 	return {
 		block,
 		scope,
-		get_context: x`${context_input} => ${context}`,
-		get_changes: x`${changes_input} => ${changes}`
+		get_context: x`${context_input} => ${context}`, // (<FancyList {items} let:prop={{a, b}} let:test={c}> := ({ prop: { a, b }, test: c }) => ({ 1: a, 2: b, 3: c }))
+		get_changes: x`${changes_input} => ${changes}` // (<FancyList {items} let:prop={{a, b}} let:test={c}> := ({ prop: a_a_b_b, test: c }) => (a_a_b_b ? 2 : 0) | (a_a_b_b ? 4 : 0) | (c ? 8 : 0)
 	};
 }
