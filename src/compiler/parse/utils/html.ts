@@ -40,7 +40,7 @@ const entity_pattern = new RegExp(
 	'g'
 );
 
-export function decode_character_references(html: string) {
+export function decode_character_references(html: string) { // 替换ASCII、unicode等转义字符
 	return html.replace(entity_pattern, (match, entity) => {
 		let code;
 
