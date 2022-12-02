@@ -76,7 +76,7 @@ export class Parser {
 			});
 		}
 
-		if (this.html.children.length) {
+		if (this.html.children.length) { // 去掉首位元素的前置后置空白字符
 			let start = this.html.children[0].start;
 			while (regex_whitespace.test(template[start])) start += 1;
 
@@ -183,7 +183,7 @@ export class Parser {
 		return identifier;
 	}
 
-	read_until(pattern: RegExp, error_message?: Parameters<Parser['error']>[0]) {
+	read_until(pattern: RegExp, error_message?: Parameters<Parser['error']>[0]) { // 移动当前位置到pattern匹配处，返回pattern匹配处之前的字符串
 		if (this.index >= this.template.length) {
 			this.error(error_message || {
 				code: 'unexpected-eof',

@@ -19,7 +19,7 @@ const elements_without_text = new Set([
 
 const regex_ends_with_svg = /svg$/;
 
-export default class Text extends Node {
+export default class Text extends Node { // HTML Text节点, Attribute Text类型属性
 	type: 'Text';
 	data: string;
 	synthetic: boolean;

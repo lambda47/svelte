@@ -14,9 +14,9 @@ export default class Body extends Node {
 		super(component, parent, scope, info);
 
 		info.attributes.forEach((node) => {
-			if (node.type === 'EventHandler') {
+			if (node.type === 'EventHandler') { // 事件处理函数 (on:event={handler})
 				this.handlers.push(new EventHandler(component, this, scope, node));
-			} else if (node.type === 'Action') {
+			} else if (node.type === 'Action') { // 生命周期hook (use:action={parameters})
 				this.actions.push(new Action(component, this, scope, node));
 			} else {
 				// TODO there shouldn't be anything else here...

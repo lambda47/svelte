@@ -36,7 +36,7 @@ export default class TemplateScope {
 		return !this.parent || !this.names.has(name) && this.parent.is_top_level(name);
 	}
 
-	get_owner(name: string): NodeWithScope {
+	get_owner(name: string): NodeWithScope { // 递归查找name定义作用域
 		return this.owners.get(name) || (this.parent && this.parent.get_owner(name));
 	}
 

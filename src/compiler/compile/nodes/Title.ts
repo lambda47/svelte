@@ -12,7 +12,7 @@ export default class Title extends Node {
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
-		this.children = map_children(component, parent, scope, info.children);
+		this.children = map_children(component, parent, scope, info.children); // 可能由多个Text和MustachTag拼接
 
 		if (info.attributes.length > 0) {
 			component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
@@ -25,7 +25,7 @@ export default class Title extends Node {
 			}
 		});
 
-		this.should_cache = info.children.length === 1
+		this.should_cache = info.children.length === 1 // 多于一个子元素时标记缓存
 			? (
 				info.children[0].type !== 'Identifier' ||
 				scope.names.has(info.children[0].name)

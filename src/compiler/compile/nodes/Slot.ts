@@ -37,7 +37,7 @@ export default class Slot extends Element {
 
 		if (!this.slot_name) this.slot_name = 'default';
 
-		if (this.slot_name === 'default') {
+		if (this.slot_name === 'default') { // 其他插槽继承default默认插槽的属性值
 			// if this is the default slot, add our dependencies to any
 			// other slots (which inherit our slot values) that were
 			// previously encountered

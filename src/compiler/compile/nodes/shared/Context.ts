@@ -11,7 +11,7 @@ export interface Context {
 	key: Identifier;
 	name?: string;
 	modifier: (node: Node) => Node;
-	default_modifier: (node: Node, to_ctx: (name: string) => Node) => Node;
+	default_modifier: (node: Node, to_ctx: (name: string) => Node) => Node; // to_ctx 用于根据名字获取引用变量Node
 }
 
 export function unpack_destructuring({
@@ -33,22 +33,22 @@ export function unpack_destructuring({
 }) {
 	if (!node) return;
 
-	if (node.type === 'Identifier') {
+	if (node.type === 'Identifier') { // value
 		contexts.push({
 			key: node as Identifier,
 			modifier,
 			default_modifier
 		});
-	} else if (node.type === 'RestElement') {
+	} else if (node.type === 'RestElement') { // ...value(递归调用时使用)
 		contexts.push({
 			key: node.argument as Identifier,
 			modifier,
 			default_modifier
 		});
 		context_rest_properties.set((node.argument as Identifier).name, node);
-	} else if (node.type === 'ArrayPattern') {
+	} else if (node.type === 'ArrayPattern') { // [a = 1, b, ...c]
 		node.elements.forEach((element, i) => {
-			if (element && element.type === 'RestElement') {
+			if (element && element.type === 'RestElement') { // ...c
 				unpack_destructuring({
 					contexts,
 					node: element,
@@ -59,9 +59,9 @@ export function unpack_destructuring({
 					context_rest_properties
 				});
 				context_rest_properties.set((element.argument as Identifier).name, element);
-			} else if (element && element.type === 'AssignmentPattern') {
+			} else if (element && element.type === 'AssignmentPattern') { // a = 1，const [a = 1, ...c] = []，数组解构默认值
 				const n = contexts.length;
-				mark_referenced(element.right, scope, component);
+				mark_referenced(element.right, scope, component); // 标记引用
 
 				unpack_destructuring({
 					contexts,
@@ -78,7 +78,7 @@ export function unpack_destructuring({
 					component,
 					context_rest_properties
 				});
-			} else {
+			} else { // b
 				unpack_destructuring({
 					contexts,
 					node: element,
@@ -90,11 +90,11 @@ export function unpack_destructuring({
 				});
 			}
 		});
-	} else if (node.type === 'ObjectPattern') {
+	} else if (node.type === 'ObjectPattern') { // { a = 1, ...b }
 		const used_properties = [];
 
 		node.properties.forEach((property) => {
-			if (property.type === 'RestElement') {
+			if (property.type === 'RestElement') { // ...b
 				unpack_destructuring({
 					contexts,
 					node: property.argument,
@@ -113,10 +113,10 @@ export function unpack_destructuring({
 				const value = property.value;
 
 				used_properties.push(x`"${key.name}"`);
-				if (value.type === 'AssignmentPattern') {
+				if (value.type === 'AssignmentPattern') { // a = 1
 					const n = contexts.length;
 
-					mark_referenced(value.right, scope, component);
+					mark_referenced(value.right, scope, component); // 标记引用
 
 					unpack_destructuring({
 						contexts,
@@ -156,7 +156,7 @@ function update_reference(
 	to_ctx: (name: string) => Node
 ): Node {
 	const find_from_context = (node: Identifier) => {
-		for (let i = n; i < contexts.length; i++) {
+		for (let i = n; i < contexts.length; i++) { // {a = b, b}
 			const { key } = contexts[i];
 			if (node.name === key.name) {
 				throw new Error(`Cannot access '${node.name}' before initialization`);
@@ -170,7 +170,7 @@ function update_reference(
 	}
 
 	// NOTE: avoid unnecessary deep clone?
-	expression = clone(expression) as Expression;
+	expression = clone(expression) as Expression; // {a, b, c = a + b}
 	walk(expression, {
 		enter(node, parent: Node) {
 			if (

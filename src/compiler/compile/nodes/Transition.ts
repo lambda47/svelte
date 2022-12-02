@@ -21,8 +21,8 @@ export default class Transition extends Node {
 		this.name = info.name;
 		component.add_reference(this as any, info.name.split('.')[0]);
 
-		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out';
-		this.is_local = info.modifiers.includes('local');
+		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out'; // in:fn/out:fn
+		this.is_local = info.modifiers.includes('local'); // in:fn|local
 
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
 			const parent_transition = (parent.intro || parent.outro);

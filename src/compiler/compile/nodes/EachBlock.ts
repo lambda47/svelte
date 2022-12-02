@@ -62,7 +62,7 @@ export default class EachBlock extends AbstractBlock {
 
 		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
 
-		if (this.has_animation) {
+		if (this.has_animation) { // has_animation在children中的Animaton中设置
 			this.children = this.children.filter(child => !isEmptyNode(child) && !isCommentNode(child));
 
 			if (this.children.length !== 1) {

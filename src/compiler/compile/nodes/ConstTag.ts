@@ -39,7 +39,7 @@ export default class ConstTag extends Node {
 		extract_identifiers(info.expression.left).forEach(({ name }) => {
       assignees.add(name);
 			const owner = this.scope.get_owner(name);
-			if (owner === parent) {
+			if (owner === parent) { // 判断重复定义（在父级作用域内不能重复定义）
 				component.error(info, compiler_errors.invalid_const_declaration(name));
 			}
     });

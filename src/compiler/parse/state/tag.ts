@@ -62,7 +62,7 @@ export default function tag(parser: Parser) {
 
 	let parent = parser.current();
 
-	if (parser.eat('!--')) {
+	if (parser.eat('!--')) { // 识别svelte注释
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true, parser_errors.unclosed_comment);
 
@@ -71,7 +71,7 @@ export default function tag(parser: Parser) {
 			end: parser.index,
 			type: 'Comment',
 			data,
-			ignores: extract_svelte_ignore(data)
+			ignores: extract_svelte_ignore(data) // 识别<!-- svelte-ignore -->注释
 		});
 
 		return;
@@ -84,7 +84,7 @@ export default function tag(parser: Parser) {
 	if (meta_tags.has(name)) {
 		const slug = meta_tags.get(name).toLowerCase();
 		if (is_closing_tag) {
-			if (
+			if ( // <svelte:window>, <svelte:body> 不能包含子元素
 				(name === 'svelte:window' || name === 'svelte:body') &&
 				parser.current().children.length
 			) {
@@ -102,7 +102,7 @@ export default function tag(parser: Parser) {
 				parser.error(parser_errors.invalid_element_placement(slug, name), start);
 			}
 
-			parser.meta_tags[name] = true;
+			parser.meta_tags[name] = true; // 每个mate_tag只能出现一次
 		}
 	}
 
@@ -111,7 +111,7 @@ export default function tag(parser: Parser) {
 		: (regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 			: name === 'svelte:fragment' ? 'SlotTemplate'
 				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element'; // ?? Custom Element不支持slot
 
 	const element: TemplateNode = {
 		start,
@@ -132,8 +132,8 @@ export default function tag(parser: Parser) {
 		parser.eat('>', true);
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while (parent.name !== name) {
-			if (parent.type !== 'Element') {
+		while (parent.name !== name) { // 查找匹配标签，关闭未闭合标签(e.g. <p>)
+			if (parent.type !== 'Element') {// 除Element类型外其他类型不能存在未闭合情况
 				const error = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
 					? parser_errors.invalid_closing_tag_autoclosed(name, parser.last_auto_closed_tag.reason)
 					: parser_errors.invalid_closing_tag_unopened(name);
@@ -149,12 +149,12 @@ export default function tag(parser: Parser) {
 		parent.end = parser.index;
 		parser.stack.pop();
 
-		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
+		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) { // 关闭未闭合标签的情况下，清空last_auto_closed_tag标记
 			parser.last_auto_closed_tag = null;
 		}
 
 		return;
-	} else if (closing_tag_omitted(parent.name, name)) {
+	} else if (closing_tag_omitted(parent.name, name)) { // 自动闭合标签处理
 		parent.end = start;
 		parser.stack.pop();
 		parser.last_auto_closed_tag = {
@@ -167,12 +167,12 @@ export default function tag(parser: Parser) {
 	const unique_names: Set<string> = new Set();
 
 	let attribute;
-	while ((attribute = read_attribute(parser, unique_names))) {
+	while ((attribute = read_attribute(parser, unique_names))) { // 解析属性定义
 		element.attributes.push(attribute);
 		parser.allow_whitespace();
 	}
 
-	if (name === 'svelte:component') {
+	if (name === 'svelte:component') { // 校验是否有this属性，this属性是否为变量
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (index === -1) {
 			parser.error(parser_errors.missing_component_definition, start);
@@ -186,7 +186,7 @@ export default function tag(parser: Parser) {
 		element.expression = definition.value[0].expression;
 	}
 
-	if (name === 'svelte:element') {
+	if (name === 'svelte:element') { // 校验是否有this属性
 		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
 		if (index === -1) {
 			parser.error(parser_errors.missing_element_definition, start);
@@ -196,11 +196,11 @@ export default function tag(parser: Parser) {
 		if (definition.value === true) {
 			parser.error(parser_errors.invalid_element_definition, definition.start);
 		}
-		element.tag = definition.value[0].data || definition.value[0].expression;
+		element.tag = definition.value[0].data || definition.value[0].expression; // data为string类型的属性值 attr = ""，其他为expression attr = {}
 	}
 
 	// special cases – top-level <script> and <style>
-	if (specials.has(name) && parser.stack.length === 1) {
+	if (specials.has(name) && parser.stack.length === 1) { // 解析script和style
 		const special = specials.get(name);
 
 		parser.eat('>', true);
@@ -211,7 +211,7 @@ export default function tag(parser: Parser) {
 
 	parser.current().children.push(element);
 
-	const self_closing = parser.eat('/') || is_void(name);
+	const self_closing = parser.eat('/') || is_void(name); // 是否为自闭和标签
 
 	parser.eat('>', true);
 
@@ -219,7 +219,7 @@ export default function tag(parser: Parser) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
 	} else if (name === 'textarea') {
-		// special case
+		// special casec 校验<textarea>标签中不能有MustacheTag指令（e.g. {#if}）和RawMustacheTag（e.g. {@html}）
 		element.children = read_sequence(
 			parser,
 			() => regex_closing_textarea_tag.test(parser.template.slice(parser.index)),
@@ -227,7 +227,7 @@ export default function tag(parser: Parser) {
 		);
 		parser.read(regex_closing_textarea_tag);
 		element.end = parser.index;
-	} else if (name === 'script' || name === 'style') {
+	} else if (name === 'script' || name === 'style') { // 非top-level script, style标签按照Text处理(e.g. 包含在<svelte:head>中)
 		// special case
 		const start = parser.index;
 		const data = parser.read_until(new RegExp(`</${name}>`));
@@ -245,7 +245,7 @@ const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 function read_tag_name(parser: Parser) {
 	const start = parser.index;
 
-	if (parser.read(SELF)) {
+	if (parser.read(SELF)) { // 校验<svelte:self>是否在IfBlock, EachBlock, InlineComponent块内，否则非法
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
 		let i = parser.stack.length;
@@ -505,7 +505,7 @@ function read_attribute_value(parser: Parser) {
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean, location: string): TemplateNode[] {
+function read_sequence(parser: Parser, done: () => boolean, location: string): TemplateNode[] { // 解析textarea标签子元素内容（只能是MustacheTag和Text）
 	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
