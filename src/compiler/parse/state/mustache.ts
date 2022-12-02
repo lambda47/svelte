@@ -46,7 +46,7 @@ export default function mustache(parser: Parser) {
 		let block = parser.current();
 		let expected;
 
-		if (closing_tag_omitted(block.name)) {
+		if (closing_tag_omitted(block.name)) { // 关闭自动闭合标签
 			block.end = start;
 			parser.stack.pop();
 			block = parser.current();
@@ -76,7 +76,7 @@ export default function mustache(parser: Parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		while (block.elseif) {
+		while (block.elseif) { // if elseif else => { else: { children: [{ elseif: true, else : {} }] } stack栈出栈所有的elseif，栈顶为对应if
 			block.end = parser.index;
 			parser.stack.pop();
 			block = parser.current();
@@ -95,8 +95,8 @@ export default function mustache(parser: Parser) {
 		trim_whitespace(block, trim_before, trim_after);
 
 		block.end = parser.index;
-		parser.stack.pop();
-	} else if (parser.eat(':else')) {
+		parser.stack.pop(); // 对应起始mustache出栈
+	} else if (parser.eat(':else')) { // :else if, :else
 		if (parser.eat('if')) {
 			parser.error(parser_errors.invalid_elseif);
 		}
@@ -121,7 +121,7 @@ export default function mustache(parser: Parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			block.else = {
+			block.else = { // else if 转换为 else: children: [{ elseif: true }] if...else嵌套结构
 				start: parser.index,
 				end: null,
 				type: 'ElseBlock',
@@ -140,7 +140,7 @@ export default function mustache(parser: Parser) {
 			parser.stack.push(block.else.children[0]);
 		} else {
 			// :else
-			const block = parser.current();
+			const block = parser.current(); // else block校验，只能搭配if和each Block使用
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error(
 					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
@@ -165,16 +165,16 @@ export default function mustache(parser: Parser) {
 		const block = parser.current();
 		const is_then = parser.eat(':then') || !parser.eat(':catch');
 
-		if (is_then) {
-			if (block.type !== 'PendingBlock') {
+		if (is_then) { // :then
+			if (block.type !== 'PendingBlock') { // 校验是否存在 pending block
 				parser.error(
 					parser.stack.some(block => block.type === 'PendingBlock')
 						? parser_errors.invalid_then_placement_unclosed_block(to_string(block))
 						: parser_errors.invalid_then_placement_without_await
 				);
 			}
-		} else {
-			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
+		} else { // :catch
+			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') { // 校验是否存在pending block或then block
 				parser.error(parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
 					? parser_errors.invalid_catch_placement_unclosed_block(to_string(block))
 					: parser_errors.invalid_catch_placement_without_await
@@ -183,12 +183,12 @@ export default function mustache(parser: Parser) {
 		}
 
 		block.end = start;
-		parser.stack.pop();
+		parser.stack.pop(); // stack结构为　await block > 最后一次处理的pending block，then block
 		const await_block = parser.current();
 
 		if (!parser.eat('}')) {
 			parser.require_whitespace();
-			await_block[is_then ? 'value' : 'error'] = read_context(parser);
+			await_block[is_then ? 'value' : 'error'] = read_context(parser); // 解析then, catch对应表达式
 			parser.allow_whitespace();
 			parser.eat('}', true);
 		}
@@ -268,11 +268,11 @@ export default function mustache(parser: Parser) {
 			parser.eat('as', true);
 			parser.require_whitespace();
 
-			block.context = read_context(parser);
+			block.context = read_context(parser); // {#each expression as content}
 
 			parser.allow_whitespace();
 
-			if (parser.eat(',')) {
+			if (parser.eat(',')) { // {#each expression as content, index}
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
 				if (!block.index) parser.error(parser_errors.expected_name);
@@ -280,7 +280,7 @@ export default function mustache(parser: Parser) {
 				parser.allow_whitespace();
 			}
 
-			if (parser.eat('(')) {
+			if (parser.eat('(')) { // / {#each expression as content (key)}
 				parser.allow_whitespace();
 
 				block.key = read_expression(parser);
@@ -290,7 +290,7 @@ export default function mustache(parser: Parser) {
 			}
 		}
 
-		const await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
+		const await_block_shorthand = type === 'AwaitBlock' && parser.eat('then'); // {#await expression then name}
 		if (await_block_shorthand) {
 			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
 				parser.allow_whitespace();
@@ -301,7 +301,7 @@ export default function mustache(parser: Parser) {
 			}
 		}
 
-		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
+		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch'); // {#await expression catch name}
 		if (await_block_catch_shorthand) {
 			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
 				parser.allow_whitespace();
@@ -317,7 +317,7 @@ export default function mustache(parser: Parser) {
 		parser.current().children.push(block);
 		parser.stack.push(block);
 
-		if (type === 'AwaitBlock') {
+		if (type === 'AwaitBlock') { // await block 压栈对应then block, catch block, pending block
 			let child_block;
 			if (await_block_shorthand) {
 				block.then.skip = false;
@@ -357,11 +357,11 @@ export default function mustache(parser: Parser) {
 		} else {
 			const expression = read_expression(parser);
 
-			identifiers = expression.type === 'SequenceExpression'
+			identifiers = expression.type === 'SequenceExpression' // SequenceExpression为,号表达式(e.g. a, b, c)
 				? expression.expressions
 				: [expression];
 
-			identifiers.forEach(node => {
+			identifiers.forEach(node => { // 必须为变量类型
 				if (node.type !== 'Identifier') {
 					parser.error(parser_errors.invalid_debug_args, node.start);
 				}
@@ -383,7 +383,7 @@ export default function mustache(parser: Parser) {
 
 		const expression = read_expression(parser);
 
-		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) {
+		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) { // 赋值表达式，不能是 +=, -=...
 			parser.error({
 				code: 'invalid-const-args',
 				message: '{@const ...} must be an assignment.'
@@ -400,7 +400,7 @@ export default function mustache(parser: Parser) {
 			expression
 		});
 	} else {
-		const expression = read_expression(parser);
+		const expression = read_expression(parser); // {expression}
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
