@@ -250,7 +250,7 @@ export default class Element extends Node {
 			if (this.name === 'pre' || this.name === 'textarea') {
 				const first = info.children[0];
 				if (first && first.type === 'Text') {
-					// The leading newline character needs to be stripped because of a qirk,
+					// The leading newline character needs to be stripped because of a quirk,
 					// it is ignored by browsers if the tag and its contents are set through
 					// innerHTML (NOT if set through the innerHTML of the tag or dynamically).
 					// Therefore strip it here but add it back in the appropriate
@@ -620,17 +620,18 @@ export default class Element extends Node {
 
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
-					const rel_values = rel ? rel.get_static_value().split(' ') : [];
-					const expected_values = ['noreferrer'];
-
-					expected_values.forEach(expected_value => {
-						if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
-							component.warn(this, {
-								code: `security-anchor-rel-${expected_value}`,
-								message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
-							});
-						}
-					});
+					if (rel == null || rel.is_static) {
+						const rel_values = rel ? rel.get_static_value().split(' ') : [];
+						const expected_values = ['noreferrer'];
+						expected_values.forEach(expected_value => {
+							if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
+								component.warn(this, {
+									code: `security-anchor-rel-${expected_value}`,
+									message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
+								});
+							}
+						});
+					}
 				}
 			}
 
