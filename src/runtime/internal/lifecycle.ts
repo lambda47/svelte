@@ -1,6 +1,6 @@
 import { custom_event } from './dom';
 
-export let current_component;
+export let current_component; // 全局变量，保存当前初始化组件
 
 export function set_current_component(component) {
 	current_component = component;

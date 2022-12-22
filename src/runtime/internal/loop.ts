@@ -7,7 +7,7 @@ type TaskEntry = { c: TaskCallback; f: () => void };
 
 const tasks = new Set<TaskEntry>();
 
-function run_tasks(now: number) {
+function run_tasks(now: number) { // 递归执行tasks，task.c返回false时停止执行
 	tasks.forEach(task => {
 		if (!task.c(now)) {
 			tasks.delete(task);
@@ -15,7 +15,7 @@ function run_tasks(now: number) {
 		}
 	});
 
-	if (tasks.size !== 0) raf(run_tasks);
+	if (tasks.size !== 0) raf(run_tasks); // 浏览器环境下raf为requestAnimationFrame
 }
 
 /**
@@ -29,7 +29,7 @@ export function clear_loops() {
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
  */
-export function loop(callback: TaskCallback): Task {
+export function loop(callback: TaskCallback): Task { // 添加task，并触发执行
 	let task: TaskEntry;
 
 	if (tasks.size === 0) raf(run_tasks);

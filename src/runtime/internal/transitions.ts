@@ -40,13 +40,13 @@ function dispatch(node: Element, direction: INTRO | OUTRO | boolean, kind: 'star
 	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
 }
 
-const outroing = new Set();
+const outroing = new Set(); // 避免outro动画重复执行
 let outros: Outro;
 
 export function group_outros() {
 	outros = {
-		r: 0,     // remaining outros
-		c: [],    // callbacks
+		r: 0,     // remaining outros 被持有的数量，为零时调用c上绑定的回调函数
+		c: [],    // callbacks 用于一起执行transition_out中设置的callback函数
 		p: outros // parent group
 	};
 }
@@ -58,14 +58,14 @@ export function check_outros() {
 	outros = outros.p;
 }
 
-export function transition_in(block: Fragment, local?: 0 | 1) {
+export function transition_in(block: Fragment, local?: 0 | 1) { // 执行fragment的i方法
 	if (block && block.i) {
 		outroing.delete(block);
 		block.i(local);
 	}
 }
 
-export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, callback?) {
+export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, callback?) { // 执行fragment的o方法
 	if (block && block.o) {
 		if (outroing.has(block)) return;
 		outroing.add(block);
@@ -266,13 +266,13 @@ interface Program {
 export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
 	let config = fn(node, params);
 
-	let t = intro ? 0 : 1;
+	let t = intro ? 0 : 1; // intro时t从0变化到1，outro时t从1变化到0
 
 	let running_program: Program | null = null;
-	let pending_program: PendingProgram | null = null;
+	let pending_program: PendingProgram | null = null; // 如果之前的intro/outro动画未结束，又开启反向动画，此时设置pending_program
 	let animation_name = null;
 
-	function clear_animation() {
+	function clear_animation() { // 清除创建的动画class
 		if (animation_name) delete_rule(node, animation_name);
 	}
 
@@ -281,9 +281,9 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		duration *= Math.abs(d);
 
 		return {
-			a: t,
-			b: program.b,
-			d,
+			a: t, // 当前t
+			b: program.b, // 目标t
+			d, // 目标t - 当前t
 			duration,
 			start: program.start,
 			end: program.start + duration,
@@ -305,7 +305,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			b
 		};
 
-		if (!b) {
+		if (!b) { // intro时设置outros
 			// @ts-ignore todo: improve typings
 			program.group = outros;
 			outros.r += 1;
@@ -340,7 +340,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 				}
 
 				if (running_program) {
-					if (now >= running_program.end) {
+					if (now >= running_program.end) { // 结束动画
 						tick(t = running_program.b, 1 - t);
 						dispatch(node, running_program.b, 'end');
 
@@ -358,7 +358,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 						running_program = null;
 					} else if (now >= running_program.start) {
 						const p = now - running_program.start;
-						t = running_program.a + running_program.d * easing(p / running_program.duration);
+						t = running_program.a + running_program.d * easing(p / running_program.duration); // 计算t
 						tick(t, 1 - t);
 					}
 				}
@@ -371,7 +371,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 	return {
 		run(b: INTRO | OUTRO) {
 			if (is_function(config)) {
-				wait().then(() => {
+				wait().then(() => { // 创建microTask
 					// @ts-ignore
 					config = config();
 					go(b);

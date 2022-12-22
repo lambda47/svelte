@@ -9,11 +9,11 @@ const render_callbacks = [];
 const flush_callbacks = [];
 
 const resolved_promise = Promise.resolve();
-let update_scheduled = false;
+let update_scheduled = false; // 避免每次有值变化都执行一遍schedule_update，flush会更新所有dirty_component组件
 
 export function schedule_update() {
 	if (!update_scheduled) {
-		update_scheduled = true;
+		update_scheduled = true; // flush结束时，把update_scheduled重新设置为false
 		resolved_promise.then(flush);
 	}
 }
@@ -67,8 +67,8 @@ export function flush() {
 
 		dirty_components.length = 0;
 		flushidx = 0;
-
-		while (binding_callbacks.length) binding_callbacks.pop()();
+    // 单独一个阶段执行全部binding，这样可以保证beforeUpdate中即使改变bind变量，获取的也是未更新的值
+		while (binding_callbacks.length) binding_callbacks.pop()(); // 设置组件$$.bound，并立即执行一次
 
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause

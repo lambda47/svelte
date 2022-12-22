@@ -143,7 +143,7 @@ export function append_styles(
 		append_stylesheet(append_styles_to, style);
 	}
 }
-
+// shadowDom返回host，否则返回document
 export function get_root_for_style(node: Node): ShadowRoot | Document {
 	if (!node) return document;
 
@@ -153,7 +153,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 	}
 	return node.ownerDocument;
 }
-
+// 创建style标签
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
 	append_stylesheet(get_root_for_style(node), style_element);
@@ -192,7 +192,7 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 }
 
 export function insert(target: Node, node: Node, anchor?: Node) {
-	target.insertBefore(node, anchor || null);
+	target.insertBefore(node, anchor || null); // null时插入在末尾
 }
 
 export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) {
@@ -220,7 +220,7 @@ export function element<K extends keyof HTMLElementTagNameMap>(name: K) {
 }
 
 export function element_is<K extends keyof HTMLElementTagNameMap>(name: K, is: string) {
-	return document.createElement<K>(name, { is });
+	return document.createElement<K>(name, { is }); // is参数用于Web Component
 }
 
 export function object_without_properties<T, K extends keyof T>(obj: T, exclude: K[]) {
@@ -277,7 +277,7 @@ export function stop_propagation(fn) {
 
 export function self(fn) {
 	return function(event) {
-		// @ts-ignore
+		// @ts-ignoreion setData
 		if (event.target === this) fn.call(this, event);
 	};
 }

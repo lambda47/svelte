@@ -9,7 +9,7 @@ interface StyleInformation {
 // we need to store the information for multiple documents because a Svelte application could also contain iframes
 // https://github.com/sveltejs/svelte/issues/3624
 const managed_styles = new Map<Document | ShadowRoot, StyleInformation>();
-let active = 0;
+let active = 0; // 判断是否有生效的样式，用于移除添加的style标签
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string) {
@@ -27,8 +27,8 @@ function create_style_information(doc: Document | ShadowRoot, node: Element & El
 }
 
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
-	const step = 16.666 / duration;
-	let keyframes = '{\n';
+	const step = 16.666 / duration; // 16.666为1000ms / 60帧，为每帧毫秒数，duration / 16.666 为总共帧数，映射到[0, 1]范围内1 / (duration / 16.666)
+	let keyframes = '{\n'; // 生成@keyframes样式
 
 	for (let p = 0; p <= 1; p += step) {
 		const t = a + (b - a) * ease(p);

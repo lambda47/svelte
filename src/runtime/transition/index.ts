@@ -7,7 +7,7 @@ export interface TransitionConfig {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	css?: (t: number, u: number) => string;
+	css?: (t: number, u: number) => string; // 返回当前时间节点对应的css样式，t为时间函数返回值[0, 1]，u为1-t
 	tick?: (t: number, u: number) => void;
 }
 

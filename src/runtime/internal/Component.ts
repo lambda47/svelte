@@ -30,7 +30,7 @@ export function mount_component(component, target, anchor, customElement) {
 		// onMount happens before the initial afterUpdate
 		add_render_callback(() => {
 
-			const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
+			const new_on_destroy = component.$$.on_mount.map(run).filter(is_function); // onMount回调函数返回值是一个函数时，返回的函数将在销毁阶段调用
 			// if the component was destroyed immediately
 			// it will update the `$$.on_destroy` reference to `null`.
 			// the destructured on_destroy may still reference to the old array
@@ -45,7 +45,7 @@ export function mount_component(component, target, anchor, customElement) {
 		});
 	}
 
-	after_update.forEach(add_render_callback);
+	after_update.forEach(add_render_callback); // after_update合并至render_callbacks数组
 }
 
 export function destroy_component(component, detaching) {
@@ -63,7 +63,7 @@ export function destroy_component(component, detaching) {
 }
 
 function make_dirty(component, i) {
-	if (component.$$.dirty[0] === -1) {
+	if (component.$$.dirty[0] === -1) { // 初始化时dirty[0]为-1
 		dirty_components.push(component);
 		schedule_update();
 		component.$$.dirty.fill(0);
@@ -71,7 +71,7 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) { // -1补码所有二进制位都为1
 	const parent_component = current_component;
 	set_current_component(component);
 
@@ -105,11 +105,11 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	let ready = false;
 
 	$$.ctx = instance
-		? instance(component, options.props || {}, (i, ret, ...rest) => {
+		? instance(component, options.props || {}, (i, ret, ...rest) => { // instance $$invalidate参数
 			const value = rest.length ? rest[0] : ret;
 			if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-				if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
-				if (ready) make_dirty(component, i);
+				if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value); // $$.bound为父组件bind变量的回调函数，指定变量变化后，通过调用父组件对应回调，更新父组件绑定变量，实现双向绑定
+				if (ready) make_dirty(component, i); // make_dirty会触发组件dom更新
 			}
 			return ret;
 		})
@@ -206,7 +206,7 @@ if (typeof HTMLElement === 'function') {
  */
 export class SvelteComponent {
 	$$: T$$;
-	$$set?: ($$props: any) => void;
+	$$set?: ($$props: any) => void; // 如果组件存在export 变量，生成的instance函数中会设置$$set
 
 	$destroy() {
 		destroy_component(this, 1);
