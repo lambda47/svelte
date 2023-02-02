@@ -12,7 +12,7 @@ interface ContextMember {
 	name: string;
 	index: Literal;
 	is_contextual: boolean;
-	is_non_contextual: boolean;
+	is_non_contextual: boolean; // hoistables, module declarations, and import
 	variable: Var;
 	priority: number;
 }
@@ -64,7 +64,7 @@ export default class Renderer {
 			this.add_to_context('#slots');
 		}
 
-		if (this.binding_groups.size > 0) {
+		if (this.binding_groups.size > 0) { // bind:group 表单单选、多选分组
 			this.add_to_context('$$binding_groups');
 		}
 

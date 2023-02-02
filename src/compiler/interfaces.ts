@@ -208,20 +208,20 @@ export interface Var {
 	name: string;
 	export_name?: string; // the `bar` in `export { foo as bar }`
 	injected?: boolean; // is true if the declaration is injected by Svelte, rather than in the code you wrote 是否为svelte生成的变量，false为用户定义变量
-	module?: boolean;
-	mutated?: boolean; // if the value's properties are assigned to inside the component 值是否在组件内被修改
-	reassigned?: boolean;
+	module?: boolean; // context="module"
+	mutated?: boolean; // if the value's properties are assigned to inside the component 值的属性是否在组件内被修改
+	reassigned?: boolean; // 值是否在组件内被改动
 	referenced?: boolean;  // referenced from template scope
-	referenced_from_script?: boolean;        // referenced from script
+	referenced_from_script?: boolean; // referenced from script
 	writable?: boolean;
 
 	// used internally, but not exposed
 	global?: boolean;
 	internal?: boolean; // event handlers, bindings
-	initialised?: boolean;
-	hoistable?: boolean;
-	subscribable?: boolean;
-	is_reactive_dependency?: boolean;
+	initialised?: boolean; // 变量是否别初始化
+	hoistable?: boolean; // 提升变量，非组件实例变量
+	subscribable?: boolean; // store变量是否被$订阅
+	is_reactive_dependency?: boolean; // 变量是否被$: 表达式引用
 	imported?: boolean;
 }
 

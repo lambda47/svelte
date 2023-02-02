@@ -414,7 +414,7 @@ export default class Component {
 		}
 
 		reserved.forEach(add);
-		internal_exports.forEach(add);
+		internal_exports.forEach(add); // runtime暴露的方法、变量
 		this.var_lookup.forEach((_value, key) => add(key));
 
 		return (name: string): Identifier => {
@@ -530,8 +530,8 @@ export default class Component {
 			return this.error(node as any, compiler_errors.default_export);
 		}
 
-		if (node.type === 'ExportNamedDeclaration') { // export { a, b} | export const a
-			if (node.source) {
+		if (node.type === 'ExportNamedDeclaration') { // export { a, b } | export const a
+			if (node.source) { // export { a, b } from ...
 				if (module_script) {
 					this.exports_from.push(node);
 				} else {
@@ -558,11 +558,11 @@ export default class Component {
 				}
 
 				return node.declaration;
-			} else {
+			} else { // export { a, b }
 				node.specifiers.forEach(specifier => {
 					const variable = this.var_lookup.get(specifier.local.name);
 
-					if (variable) { // export { a, b }
+					if (variable) {
 						variable.export_name = specifier.exported.name;
 
 						if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {

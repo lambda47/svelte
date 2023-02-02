@@ -31,7 +31,7 @@ export default class TextWrapper extends Wrapper {
 		if (this.renderer.component.component_options.preserveWhitespace) return false;
 		if (regex_non_whitespace_characters.test(this.data)) return false;
 
-		return !this.node.within_pre();
+		return !this.node.within_pre(); // 不在pre标签内
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {

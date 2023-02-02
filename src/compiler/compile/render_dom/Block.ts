@@ -45,7 +45,7 @@ export default class Block {
 		declarations: Array<Node | Node[]>;
 		init: Array<Node | Node[]>;
 		create: Array<Node | Node[]>;
-		claim: Array<Node | Node[]>;
+		claim: Array<Node | Node[]>; // 服务器端渲染hydrate时，创建流程
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
@@ -172,14 +172,14 @@ export default class Block {
 		parent_node: Node,
 		no_detach?: boolean
 	) {
-		this.add_variable(id);
-		this.chunks.create.push(b`${id} = ${render_statement};`);
+		this.add_variable(id); // 向variables中添加变量定义
+		this.chunks.create.push(b`${id} = ${render_statement};`); // 像create中添加dom创建语句(最终编译为c方法)
 
 		if (this.renderer.options.hydratable) {
 			this.chunks.claim.push(b`${id} = ${claim_statement || render_statement};`);
 		}
 
-		if (parent_node) {
+		if (parent_node) { // 像mount中添加dom挂载语句(最终编译为m方法)
 			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
 			if (is_head(parent_node) && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
